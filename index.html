@@ -78,7 +78,7 @@
         // Configuration
         const THINGSPEAK_API_KEY = '6NU9XVBA69A852ES';
         const ADAFRUIT_IO_USERNAME = 'stevenxela';
-        const ADAFRUIT_IO_KEY = 'aio_spGP71XQqoLScRumuKyfusuziDht';
+        let ADAFRUIT_IO_KEY = '';  // Adafruit IO Key will be prompted for each session
         const TEMP_HUMID_SERVICE_UUID = "ebe0ccb0-7a0a-4b0c-8a1a-6ff2997da3a6";
         const TEMP_HUMID_CHAR_UUID = "ebe0ccc1-7a0a-4b0c-8a1a-6ff2997da3a6";
         const READ_INTERVAL = 180000; // 3 minutes
@@ -101,7 +101,20 @@
             logDiv.insertBefore(entry, logDiv.firstChild);
         }
 
+        // Prompt user for Adafruit IO key at the start of the session
+        function promptAdafruitIOKey() {
+            ADAFRUIT_IO_KEY = prompt('Please enter your Adafruit IO key:');
+            if (!ADAFRUIT_IO_KEY) {
+                log('Adafruit IO key is required for uploading data. Please refresh the page to try again.', 'error');
+            }
+        }
+
         async function uploadData(temp, humidity, battery) {
+            if (!ADAFRUIT_IO_KEY) {
+                log('Adafruit IO key is not set. Please enter your Adafruit IO key to continue.', 'error');
+                return;
+            }
+
             try {
                 // ThingSpeak Upload
                 const thingspeakUrl = `https://api.thingspeak.com/update?api_key=${THINGSPEAK_API_KEY}&field1=${temp}&field2=${humidity}&field3=${battery}`;
@@ -149,7 +162,6 @@
                 const temp = (data.getUint16(0, true)) / 100;
                 const humidity = data.getUint8(2);
                 const battery = data.byteLength > 3 ? Math.min(data.getUint8(3), 100) : 100;
-                //const battery = Math.min(data.getUint8(3), 100);
 
                 if (temp < -20 || temp > 60 || humidity < 0 || humidity > 100) {
                     throw new Error('Invalid sensor readings');
@@ -272,6 +284,7 @@
             connectBtn.disabled = true;
         } else {
             log('Web Bluetooth is supported. Click "Connect Sensor" to start.', 'info');
+            promptAdafruitIOKey(); // Prompt user for Adafruit IO key at the start
         }
     </script>
 </body>
